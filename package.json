@@ -1,0 +1,30 @@
+{
+  "name": "push_server",
+  "version": "1.0.0",
+  "description": "Generic Node Push Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stackacademytv/push_server.git"
+  },
+  "keywords": [
+    "pwa",
+    "push",
+    "server",
+    "progressive",
+    "web",
+    "app",
+    "push",
+    "server",
+    "notifications"
+  ],
+  "author": "Ray Viljoen <ray@stackacademy.tv>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stackacademytv/push_server/issues"
+  },
+  "homepage": "https://github.com/stackacademytv/push_server#readme"
+}
