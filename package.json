@@ -26,5 +26,9 @@
   "bugs": {
     "url": "https://github.com/stackacademytv/push_server/issues"
   },
-  "homepage": "https://github.com/stackacademytv/push_server#readme"
+  "homepage": "https://github.com/stackacademytv/push_server#readme",
+  "dependencies": {
+    "express": "^4.16.0",
+    "web-push": "^3.2.3"
+  }
 }
