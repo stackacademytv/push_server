@@ -4,6 +4,8 @@
   "description": "Generic Node Push Server",
   "main": "index.js",
   "scripts": {
+    "start": "node server.js",
+    "install": "node_modules/web-push/src/cli.js generate-vapid-keys --json > vapid.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -29,6 +31,7 @@
   "homepage": "https://github.com/stackacademytv/push_server#readme",
   "dependencies": {
     "express": "^4.16.0",
+    "urlsafe-base64": "^1.0.0",
     "web-push": "^3.2.3"
   }
 }
