@@ -1,7 +1,8 @@
-
 // Modules
 const http = require('http')
+const url = require('url')
 const urlsafeBase64 = require('urlsafe-base64')
+const Storage = require('node-storage')
 const webpush = require('web-push')
 const vapid = require('./vapid.json')
 
@@ -12,63 +13,82 @@ webpush.setVapidDetails(
   vapid.privateKey
 )
 
+// Create store
+const store = new Storage('./db')
+let subscriptions = store.get('subscriptions') || []
+
 // Create HTTP Server
-http.createServer( (request, response) => {
+http.createServer((request, response) => {
 
-    // Enable CORS
-    response.setHeader('Access-Control-Allow-Origin', '*')
+  // Enable CORS
+  response.setHeader('Access-Control-Allow-Origin', '*')
 
-    // Subscribe
-    if ( request.url.match(/^\/subscribe\/?/) ) {
+  // Subscribe
+  if (request.method === 'POST' && request.url.match(/^\/subscribe\/?/)) {
 
-        // // Check for subscriptiion credentials
-        // const pushSubscription = {
-        //     endpoint: 'kjelkgjew',
-        //     keys: { auth: 'eknmgeklg', p256dh: 'keknkgnmew' }
-        // }
+    // Get POST body
+    let body = []
 
-        response.end('subscribed')
-        
+    // Read stream
+    request.on('data', chunk => body.push(chunk)).on('end', () => {
+
+      // Parse subscription data
+      subscriptions.push(JSON.parse(body.toString()))
+
+      // Persist subscriptions
+      store.put('subscriptions', subscriptions)
+
+      // Respond
+      response.end('Succesfully Subscribed')
+    })
+
     // Public Key
-    } else if ( request.url.match(/^\/key\/?/) ) {
+  } else if (request.url.match(/^\/key\/?/)) {
 
-        // Create URL safe vapid public key
-        let decodedVapidPublicKey = urlsafeBase64.decode(vapid.publicKey)
-        response.end(decodedVapidPublicKey)
-        
+    // Create URL safe vapid public key
+    let decodedVapidPublicKey = urlsafeBase64.decode(vapid.publicKey)
+    response.end(decodedVapidPublicKey)
+
     // Unsubscribe
-    } else if ( request.url.match(/^\/unsubscribe\/?/) ) {
+  } else if (request.url.match(/^\/push\/?/)) {
 
-        response.end('unsubscribed')
-    
+    // Collect all notification promises
+    let notifications = []
+
+    // Send the notification to each of the registered recipients
+    subscriptions.forEach( (subscription, i) => {
+
+      // Send notification
+      notifications.push(
+        
+        webpush.sendNotification(subscription, 'Your Push Payload Text')
+          .catch( status => {
+
+            // Check for "410 - Gone" status code
+            if (status.statusCode === 410) subscriptions.splice( i, 1 )
+
+            // Return a value to the promise
+            return 'deleted'
+          })
+      )
+    })
+
+    // Handle notifications sent
+    Promise.all(notifications).then( () => {
+      
+      // Persist 'cleaned' subscriptions
+      store.put('subscriptions', subscriptions)
+
+      // Respond
+      response.end('Push Notifications sent')
+    })
+
     // Not Found
-    } else {
-        response.status = 404
-        response.end('Unknown Request')
-    }
+  } else {
 
-    
-    // // POST Requests
-    // if (method === 'POST') {
+    response.status = 404
+    response.end('Unknown Request')
+  }
 
-    //     let body = [];
-
-    //     request
-    //         .on( 'error', console.error )
-    //         .on('data', body.push )
-    //         .on('end', () => {
-
-    //             // Prepare body
-    //             body = Buffer.concat(body).toString()
-
-    //             // 
-    //             response.statusCode = 200
-    //             response.end( 'POSTED' )
-
-    //     });
-    // }
-
-// Start server
-}).listen( 3333 )
-
-
+  // Start server
+}).listen(3333)

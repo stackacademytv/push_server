@@ -1,86 +1,86 @@
+// Push server url
+const pushURL = 'http://localhost:3333'
 
-// Ref service worker registration
-let swReg = null
+// Ref service worker registration & subscription
+let swReg, swSub = null
 
 // Register the SW
-navigator.serviceWorker.register('sw.js').then((registration) => {
+navigator.serviceWorker.register('sw.js').then(registration => {
 
   // Set SW Registration reference
   swReg = registration
 
-// Catch errors
+  // Check if a subscribsion exists and if so, update the UI
+  swReg.pushManager.getSubscription().then(setSubscribedStatus)
+
+  // Catch errors
 }).catch(console.error)
 
 
-// Subscribe for push notifications
+// Get Application Server Key
+const getApplicationServerKey = () => {
+
+  // Get Vapid Public Key from Push Server
+  return fetch(`${pushURL}/key`)
+
+    // Return response body as buffer
+    .then(res => res.arrayBuffer())
+
+    // Return a new Uint8Array from the pub key
+    .then(key => new Uint8Array(key))
+}
+
+
+// Create push subscription
 const subscribe = () => {
 
   // Check registration is available
   if (!swReg) return console.error('Cannot subscribe. Service Worker Registration not found')
 
-  // Subscribe
-  swReg.pushManager.getSubscription().then((sub) => {
+  // Get application server key
+  getApplicationServerKey()
+    .then(applicationServerKey => {
 
-    // If subscription found, set status & return
-    if (sub) {
+      // Subscribe
+      return swReg.pushManager
+        .subscribe({ userVisibleOnly: true, applicationServerKey })
+        .then(res => res.toJSON())
+        .then(subscription => {
 
-      // Update suibscription status
-      setSunscribedStatus(true)
+          // Register subscription with push server
+          fetch(`${pushURL}/subscribe`, {
+              method: 'post',
+              body: JSON.stringify(subscription)
 
-      // Return subscription to promise
-      return sub;
-    }
+          // Successfully registered with push server, update UI
+          }).then(setSubscribedStatus)
 
-    // Get Vapid Public Key from Push Server
-    fetch('http://localhost:3333/key')
+          // Failed to register with push server, so unsubscribe again
+          .catch(unsubscribe)
+        })
 
-      // Return response body as buffer
-      .then( res => res.arrayBuffer() )
-
-      // Attempt the subscription
-      .then((publicKey) => {
-
-        // Create an  application server key
-        let applicationServerKey = new Uint8Array(publicKey)
-
-        // Subscribe
-        swReg.pushManager.getSubscription().then( (sub) => {
-
-          // Subscribe
-          return swReg.pushManager.subscribe({
-            userVisibleOnly: true, applicationServerKey
-          })
-
-        }).then(sub => sub.toJSON())
-          .then(console.log)
-          .catch(console.error)
-
-      }).catch(console.error)
-  })
-
+    }).catch(console.error)
 }
+
 
 // Unsubscribe from push notifications
 const unsubscribe = () => {
 
-  // Update subscription status
-  setSunscribedStatus(false)
+  // Unsubscribe and update UI status
+  swReg.pushManager.getSubscription().then( subscription => {
+    subscription.unsubscribe().then(setSubscribedStatus)
+  })
 }
+
 
 // Update UI for subscription status
-const setSunscribedStatus = (status) => {
-
-  if (status) {
-    $('#subscribe').addClass('hidden')
-    $('#unsubscribe').removeClass('hidden')
-  } else {
-    $('#subscribe').removeClass('hidden')
-    $('#unsubscribe').addClass('hidden')
-  }
+const setSubscribedStatus = (change) => {
+  if(change) $('#subscribe, #unsubscribe').toggleClass('hidden')
 }
+
 
 // Ready
 $(() => {
-  $('#subscribe').click(subscribe)
-  $('#unsubscribe').click(unsubscribe)
+  $('#subscribe button').click(subscribe)
+  $('#unsubscribe button').click(unsubscribe)
 })
