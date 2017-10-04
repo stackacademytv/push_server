@@ -1,8 +1,8 @@
 // Push server url
 const pushURL = 'http://localhost:3333'
 
-// Ref service worker registration & subscription
-let swReg, swSub = null
+// Ref service worker registration
+let swReg = null
 
 // Register the SW
 navigator.serviceWorker.register('sw.js').then(registration => {
@@ -68,19 +68,21 @@ const unsubscribe = () => {
 
   // Unsubscribe and update UI status
   swReg.pushManager.getSubscription().then( subscription => {
-    subscription.unsubscribe().then(setSubscribedStatus)
+    subscription.unsubscribe().then( () => {
+      setSubscribedStatus(false)
+    })
   })
 }
 
 
 // Update UI for subscription status
-const setSubscribedStatus = (change) => {
-  if(change) $('#subscribe, #unsubscribe').toggleClass('hidden')
+const setSubscribedStatus = (state) => {
+
+  if (state) {
+    document.getElementById('subscribe').className = 'hidden'
+    document.getElementById('unsubscribe').className = ''
+  } else {
+    document.getElementById('subscribe').className = ''
+    document.getElementById('unsubscribe').className = 'hidden'
+  }
 }
-
-
-// Ready
-$(() => {
-  $('#subscribe button').click(subscribe)
-  $('#unsubscribe button').click(unsubscribe)
-})
