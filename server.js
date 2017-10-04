@@ -9,7 +9,7 @@ http.createServer((request, response) => {
   response.setHeader('Access-Control-Allow-Origin', '*')
 
   // Subscribe
-  if (request.method === 'POST' && request.url.match(/^\/subscribe\/?/)) {
+  if ( request.method === 'POST' && request.url.match(/^\/subscribe\/?/) ) {
 
     // Get POST body
     let body = []
@@ -18,7 +18,7 @@ http.createServer((request, response) => {
     request.on('data', chunk => body.push(chunk)).on('end', () => {
 
       // Parse subscription JSON
-      let subscribtion = JSON.parse(body.toString())
+      let subscription = JSON.parse(body.toString())
 
       // Store subscription
       push.addSubscription( subscription )
@@ -28,21 +28,26 @@ http.createServer((request, response) => {
     })
 
   // Public Key
-  } else if (request.url.match(/^\/key\/?/)) {
+  } else if ( request.url.match(/^\/key\/?/) ) {
 
     // Respond with public key
     response.end( push.getKey() )
 
   // Push notification
-  } else if (request.url.match(/^\/push\/?/)) {
+  } else if ( request.method === 'POST' && request.url.match(/^\/push\/?/) ) {
 
-    // Get message from POST body
+    // Get POST body
+    let body = []
 
-    // Send notifications
-    push.send('Some Message')
+    // Read stream
+    request.on('data', chunk => body.push(chunk)).on('end', () => {
 
-    // Respond 200
-    response.end()
+      // Send notifications with POST body
+      push.send( body.toString() )
+
+      // Respond 200
+      response.end()
+    })
 
   // Not Found
   } else {
