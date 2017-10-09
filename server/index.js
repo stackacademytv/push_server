@@ -2,6 +2,7 @@
 const http = require('http')
 const push = require('./push')
 
+
 // Create HTTP Server
 http.createServer((request, response) => {
 
@@ -24,14 +25,16 @@ http.createServer((request, response) => {
       push.addSubscription( subscription )
 
       // Respond 200
-      response.end()
+      response.end('OK: Subscribed')
     })
 
-  // Public Key
+  
+    // Public Key
   } else if ( request.url.match(/^\/key\/?/) ) {
 
     // Respond with public key
     response.end( push.getKey() )
+
 
   // Push notification
   } else if ( request.method === 'POST' && request.url.match(/^\/push\/?/) ) {
@@ -46,15 +49,16 @@ http.createServer((request, response) => {
       push.send( body.toString() )
 
       // Respond 200
-      response.end()
+      response.end('OK: Push Sent')
     })
 
   // Not Found
   } else {
 
     response.status = 404
-    response.end('Unknown Request')
+    response.end('Error: Unknown Request')
   }
 
-  // Start server
-}).listen(3333)
+
+// Start server
+}).listen(3333, () => console.log('Push Server Running'))

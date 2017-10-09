@@ -4,8 +4,8 @@
   "description": "Generic Node Push Server",
   "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "install": "node_modules/web-push/src/cli.js generate-vapid-keys --json > vapid.json",
+    "start": "node server/",
+    "vapid": "node_modules/web-push/src/cli.js generate-vapid-keys --json > server/vapid.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
